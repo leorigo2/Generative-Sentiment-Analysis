@@ -1,0 +1,26 @@
+Working on: cuda
+Prompt:  Analyze the sentiment of the following text and complete the sentence.
+    Text: {}
+    This text expresses sentiment:
+Time taken: 507.75 seconds
+Overall Accuracy: 0.5441
+Positive Accuracy: 1191 / 2375 (0.5015)
+Neutral Accuracy: 1907 / 5937 (0.3212)
+Negative Accuracy: 3586 / 3972 (0.9028)
+Prompt:  Analyze the sentiment of the following text and complete the sentence, choosing only between [Positive, Negative, Neutral]
+    Text: {}
+    This text expresses sentiment:
+Time taken: 574.71 seconds
+Overall Accuracy: 0.5313
+Positive Accuracy: 940 / 2375 (0.3958)
+Neutral Accuracy: 3058 / 5937 (0.5151)
+Negative Accuracy: 2528 / 3972 (0.6365)
+Prompt:  Is the following text expressing "Positive", "Negative" or "Neutral" sentiment?
+    Text: {}
+    Answer:
+Time taken: 491.55 seconds
+Overall Accuracy: 0.4314
+Positive Accuracy: 1013 / 2375 (0.4265)
+Neutral Accuracy: 2689 / 5937 (0.4529)
+Negative Accuracy: 1597 / 3972 (0.4021)
+

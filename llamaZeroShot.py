@@ -111,11 +111,11 @@ if __name__ == "__main__":
         neuCorrect = neuNumber = 0
         negCorrect = negNumber = 0
         
-        for i, text in enumerate(val_text):
+        for i, text in enumerate(test_text):
             result = analyze_sentiment(text, prompt) 
 
             result = result.strip()
-            true_label = val_labels[i].strip()
+            true_label = test_labels[i].strip()
 
             if result == true_label:
                 correct += 1
@@ -140,7 +140,7 @@ if __name__ == "__main__":
 
         print(f"Prompt: ", prompt)
         print(f"Time taken: {elapsed_time:.2f} seconds")
-        print(f"Overall Accuracy: {correct / len(val_labels):.4f}")
+        print(f"Overall Accuracy: {correct / len(test_labels):.4f}")
         print(f"Positive Accuracy: {posCorrect} / {posNumber} ({posCorrect / posNumber:.4f})")
         print(f"Neutral Accuracy: {neuCorrect} / {neuNumber} ({neuCorrect / neuNumber:.4f})")
         print(f"Negative Accuracy: {negCorrect} / {negNumber} ({negCorrect / negNumber:.4f})")
