@@ -10,8 +10,8 @@ import time
 
 max_new_tokens = 1
 
-tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.2-1B-Instruct")
-model = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-3.2-1B-Instruct")
+tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-1.7B")
+model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen3-1.7B")
 
 if torch.cuda.is_available():
     device = "cuda"
@@ -116,6 +116,9 @@ if __name__ == "__main__":
 
             result = result.strip()
             true_label = val_labels[i].strip()
+
+            print(result, true_label)
+
 
             if result == true_label:
                 correct += 1
