@@ -23,3 +23,33 @@ Overall Accuracy: 0.4318
 Positive Accuracy: 1662 / 2375 (0.6998)
 Neutral Accuracy: 1392 / 5937 (0.2345)
 Negative Accuracy: 2250 / 3972 (0.5665)
+
+FEW SHOT: 
+Working on: cuda
+Prompt:  Analyze the sentiment of the following texts. Choose one of: Positive, Negative, Neutral. Respond with only one word.
+
+    Text: ""QT @user In the original draft of the 7th book, Remus Lupin survived the Battle of Hogwarts. #HappyBirthdayRemusLupin" "
+    Sentiment: Positive
+
+    Text: "@user LIT MY MUM 'Kerry the louboutins I wonder how many Willam owns!!! Look Kerry Warner Wednesday!' "
+    Sentiment: Positive
+
+    Text: "So disappointed in wwe summerslam! I want to see john cena wins his 16th title "
+    Sentiment: Negative
+
+    Text: "That sucks if you have to take the SATs tomorrow "
+    Sentiment: Negative
+
+    Text: ""Ben Smith / Smith (concussion) remains out of the lineup Thursday, Curtis #NHL #SJ" "
+    Sentiment: Neutral
+
+    Text: "Sorry bout the stream last night I crashed out but will be on tonight for sure. Then back to Minecraft in pc tomorrow night. "
+    Sentiment: Neutral
+
+    Text: "{}"
+    Sentiment:
+Time taken: 3691.01 seconds
+Overall Accuracy: 0.6346
+Positive Accuracy: 1910 / 2375 (0.8042)
+Neutral Accuracy: 3205 / 5937 (0.5398)
+Negative Accuracy: 2680 / 3972 (0.6747)
