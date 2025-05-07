@@ -54,3 +54,33 @@ Positive Accuracy: 2037 / 2375 (0.8577)
 Neutral Accuracy: 854 / 5937 (0.1438)
 Negative Accuracy: 3441 / 3972 (0.8663)
 
+KAGGLE DS:
+
+Prompt:  Analyze the sentiment of the following texts. Choose one of: Positive, Negative, Neutral. Respond with only one word.
+
+    Text: "What a great day!!! Looks like dream."
+    Sentiment: Positive
+
+    Text: "I feel sorry, I miss you here in the sea beach"
+    Sentiment: Positive
+
+    Text: "We attend in the class just for listening teachers reading on slide. Just Nonsence "
+    Sentiment: Negative
+
+    Text: "Those who want to go, let them go"
+    Sentiment: Negative
+
+    Text: "Its night 2 am, feeling neutral"
+    Sentiment: Neutral
+
+    Text: "i`ve been sick for the past few days"
+    Sentiment: Neutral
+
+    Text: "{}"
+    Sentiment:
+Time taken: 64.99 seconds
+Overall Accuracy: 0.5611
+Positive Accuracy: 153 / 166 (0.9217)
+Neutral Accuracy: 39 / 199 (0.1960)
+Negative Accuracy: 88 / 134 (0.6567)
+
