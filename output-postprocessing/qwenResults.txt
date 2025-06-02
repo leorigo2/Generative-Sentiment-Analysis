@@ -1,0 +1,19 @@
+FEWSHOT
+
+=== RISULTATI ===
+Prompt: Text: {}...
+Tempo totale: 202.19 secondi
+Accuracy totale: 0.6112
+Positive Accuracy: 138/166 (0.8313)
+Neutral Accuracy: 83/199 (0.4171)
+Negative Accuracy: 84/134 (0.6269)
+
+ZEROSHOT
+
+=== RISULTATI ===
+Prompt: Text: {}...
+Tempo totale: 118.14 secondi
+Accuracy totale: 0.5731
+Positive Accuracy: 145/166 (0.8735)
+Neutral Accuracy: 65/199 (0.3266)
+Negative Accuracy: 76/134 (0.5672)

@@ -10,20 +10,25 @@ import time
 import kagglehub
 from kagglehub import KaggleDatasetAdapter
 
-max_new_tokens = 1
-dataset  = "huggingface"
-model = "gpt"
-
 models = {
-    "gpt" : "gpt2",
-    "qwen": "Qwen/Qwen3-1.7B",
-    "llama": "meta-llama/Llama-3.2-1B-Instruct"
+    "qwen": "Qwen/Qwen1.5-1.8B-Chat",
 }
 
+max_new_tokens = 20
+dataset  = "huggingface" # "huggingface" or "github"
+model = "qwen"
+prompting = 1 # 1 corresponds to few shot, 0 to zero shot
+
+# Generation parameters
+temperature = 0.7 # To invalidate set to 1.0 
+top_k = 5 # To invalidate set to 0.0
+top_p = 0.9 # To invalidate set to 1.0
 
 tokenizer = AutoTokenizer.from_pretrained(models[model])
 model = AutoModelForCausalLM.from_pretrained(models[model])
 
+
+# Seleziona il dispositivo
 if torch.cuda.is_available():
     device = "cuda"
 elif torch.backends.mps.is_available():
@@ -32,10 +37,8 @@ else:
     device = "cpu"
 
 print("Working on:", device)
-
 device = torch.device(device)
 model.to(device)
-
 
 hf_dataset = kagglehub.load_dataset(
     KaggleDatasetAdapter.HUGGING_FACE,
@@ -69,7 +72,6 @@ test_labels = {
     "github": gh_test_labels
 }
 
-
 i = 0
 pos_text = []
 neg_text = []
@@ -87,62 +89,88 @@ sorted_pos = sorted(pos_text, key=len)
 sorted_neu = sorted(neu_text, key=len)
 sorted_neg = sorted(neg_text, key=len)
 
+allowed_labels = ["Positive", "Negative", "Neutral"]
 
-allowed_labels = [" Positive", " Negative", " Neutral"] 
+system_prompt_zeroshot = "You are a helpful assistant that recognizes the sentiment of a text and chooses between Positive, Negative and Neutral."
 
-allowed_token_ids = [tokenizer(label, add_special_tokens=False)["input_ids"][0] for label in allowed_labels]
+system_prompt_fewshot = f"""You are a helpful assistant that recognizes the sentiment of a text and chooses between Positive, Negative and Neutral. Following this examples:
+        Text: "{sorted_pos[-1]}"
+        Sentiment: Positive
 
-class RestrictFirstTokenProcessor(torch.nn.Module):
-    def __init__(self, allowed_ids):
-        super().__init__()
-        self.allowed_ids = allowed_ids
-        self.called = False
+        Text: "{sorted_pos[-2]}"
+        Sentiment: Positive
 
-    def __call__(self, input_ids, scores):
-        if not self.called:
-            mask = torch.full_like(scores, float('-inf'))
-            for idx in self.allowed_ids:
-                mask[:, idx] = scores[:, idx]
-            scores = mask
-            self.called = True
-        return scores
+        Text: "{sorted_pos[-3]}"
+        Sentiment: Positive
+
+        Text: "{sorted_neg[-1]}"
+        Sentiment: Negative
+
+        Text: "{sorted_neg[-2]}"
+        Sentiment: Negative
+
+        Text: "{sorted_neg[-3]}"
+        Sentiment: Negative
+
+        Text: "{sorted_neu[-1]}"
+        Sentiment: Neutral
+
+        Text: "{sorted_neu[-2]}"
+        Sentiment: Neutral
+
+        Text: "{sorted_neu[-3]}"
+        Sentiment: Neutral
+    """
 
 prompts = [
-    """Analyze the sentiment of the following text and complete the sentence.
-    Text: {}
-    This text expresses sentiment:""",
-    """Analyze the sentiment of the following text and complete the sentence, choosing only between [Positive, Negative, Neutral]
-    Text: {}
-    This text expresses sentiment:""",
-    """Is the following text expressing "Positive", "Negative" or "Neutral" sentiment?
-    Text: {}
-    Answer:"""
-    ]
+    """Text: {}"""
+]
 
+def extract_label_from_output(output_text, allowed_labels):
+    output_text = output_text.lower()
+    for label in allowed_labels:
+        if label.lower() in output_text:
+            return label
+    return "Unknown"
 
-def analyze_sentiment(text: str, prompt: str) -> str:
-
+def analyze_sentiment(text, prompt):
+      
     prompt = prompt.format(text)
+      
+    messages = [
+        {"role": "system", "content": (system_prompt_zeroshot if prompting == 0 else system_prompt_fewshot)},
+        {"role": "user", "content": prompt}
+    ]
+    text = tokenizer.apply_chat_template(
+        messages,
+        tokenize=False,
+        add_generation_prompt=True
+    )
 
-    inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+    inputs = tokenizer([text], return_tensors="pt").to(device)
 
-    logits_processor = LogitsProcessorList()
-    logits_processor.append(RestrictFirstTokenProcessor(allowed_token_ids))
+    if 'attention_mask' not in inputs:
+        inputs['attention_mask'] = (inputs['input_ids'] != tokenizer.pad_token_id).long()
 
     with torch.no_grad():
         outputs = model.generate(
-            **inputs,
-            max_new_tokens=1,
-            logits_processor=logits_processor,
-            pad_token_id=tokenizer.eos_token_id
+            inputs.input_ids,
+            max_new_tokens=max_new_tokens,
+            pad_token_id=tokenizer.eos_token_id,
+            attention_mask=inputs['attention_mask']
         )
 
-    full_output = tokenizer.decode(outputs[0], skip_special_tokens=True)
-    generated = full_output[len(prompt):].strip()
-    return f"{generated}"
+    generated_ids = [
+        output_ids[len(input_ids):] for input_ids, output_ids in zip(inputs.input_ids, outputs)
+    ]
 
+    response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
+    predicted_label = extract_label_from_output(response, allowed_labels)
+
+    return predicted_label
+
+# Main
 if __name__ == "__main__":
-
     for prompt in prompts:
         start_time = time.time()
 
@@ -153,34 +181,32 @@ if __name__ == "__main__":
 
         for i, text in enumerate(test_text[dataset]):
             result = analyze_sentiment(text, prompt)
-
-            result = result.strip()
-            true_label = test_labels[dataset][i].strip()
+            true_label = test_labels[dataset][i]
 
             if result == true_label:
                 correct += 1
 
             if true_label == "Positive":
+                posNumber += 1
                 if result == "Positive":
                     posCorrect += 1
-                posNumber += 1
 
             elif true_label == "Neutral":
+                neuNumber += 1
                 if result == "Neutral":
                     neuCorrect += 1
-                neuNumber += 1
 
             elif true_label == "Negative":
+                negNumber += 1
                 if result == "Negative":
                     negCorrect += 1
-                negNumber += 1
 
         end_time = time.time()
         elapsed_time = end_time - start_time
 
-        print(f"Prompt: ", prompt)
-        print(f"Time taken: {elapsed_time:.2f} seconds")
-        print(f"Overall Accuracy: {correct / len(test_labels[dataset]):.4f}")
-        print(f"Positive Accuracy: {posCorrect} / {posNumber} ({posCorrect / posNumber:.4f})")
-        print(f"Neutral Accuracy: {neuCorrect} / {neuNumber} ({neuCorrect / neuNumber:.4f})")
-        print(f"Negative Accuracy: {negCorrect} / {negNumber} ({negCorrect / negNumber:.4f})")
+        print("--- Results ---")
+        print(f"Prompt: {prompt[:60]}...")
+        print(f"Time: {elapsed_time:.2f} s")
+        print(f"Positive Accuracy: {posCorrect}/{posNumber} ({posCorrect / posNumber:.4f})")
+        print(f"Neutral Accuracy: {neuCorrect}/{neuNumber} ({neuCorrect / neuNumber:.4f})")
+        print(f"Negative Accuracy: {negCorrect}/{negNumber} ({negCorrect / negNumber:.4f})")
