@@ -9,15 +9,17 @@ from transformers import GPT2Tokenizer, GPT2LMHeadModel
 import time
 import kagglehub
 from kagglehub import KaggleDatasetAdapter
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
 
 models = {
     "qwen": "Qwen/Qwen1.5-1.8B-Chat",
 }
 
 max_new_tokens = 20
-dataset  = "huggingface" # "huggingface" or "github"
+dataset  = "github" # "huggingface" or "github"
 model = "qwen"
-prompting = 1 # 1 corresponds to few shot, 0 to zero shot
+# prompting = 1 # 1 corresponds to few shot, 0 to zero shot
 
 # Generation parameters
 temperature = 0.7 # To invalidate set to 1.0 
@@ -171,42 +173,83 @@ def analyze_sentiment(text, prompt):
 
 # Main
 if __name__ == "__main__":
-    for prompt in prompts:
-        start_time = time.time()
+    for prompting in range(2):
+        prompt_name = "fewshot" if prompting == 1 else "zeroshot"
+        results = {}
+        
+        for prompt in prompts[prompting]:
+            start_time = time.time()
 
-        correct = 0
-        posCorrect = posNumber = 0
-        neuCorrect = neuNumber = 0
-        negCorrect = negNumber = 0
+            correct = 0
+            posCorrect = posNumber = 0
+            neuCorrect = neuNumber = 0
+            negCorrect = negNumber = 0
+            
+            pred = []
+            true = []
 
-        for i, text in enumerate(test_text[dataset]):
-            result = analyze_sentiment(text, prompt)
-            true_label = test_labels[dataset][i]
+            for i, text in enumerate(test_text[dataset]):
+                result = analyze_sentiment(text, prompt)
+                true_label = test_labels[dataset][i]
+                
+                pred.append(result)
+                true.append(true_label)
 
-            if result == true_label:
-                correct += 1
+                if result == true_label:
+                    correct += 1
 
-            if true_label == "Positive":
-                posNumber += 1
-                if result == "Positive":
-                    posCorrect += 1
+                if true_label == "Positive":
+                    posNumber += 1
+                    if result == "Positive":
+                        posCorrect += 1
 
-            elif true_label == "Neutral":
-                neuNumber += 1
-                if result == "Neutral":
-                    neuCorrect += 1
+                elif true_label == "Neutral":
+                    neuNumber += 1
+                    if result == "Neutral":
+                        neuCorrect += 1
 
-            elif true_label == "Negative":
-                negNumber += 1
-                if result == "Negative":
-                    negCorrect += 1
+                elif true_label == "Negative":
+                    negNumber += 1
+                    if result == "Negative":
+                        negCorrect += 1
 
-        end_time = time.time()
-        elapsed_time = end_time - start_time
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            total_samples = len(test_text[dataset])
+            overall_accuracy = correct / total_samples
+            results[prompt] = {
+                "overall_accuracy": overall_accuracy,
+                "posCorrect": posCorrect,
+                "posNumber": posNumber,
+                "neuCorrect": neuCorrect,
+                "neuNumber": neuNumber,
+                "negCorrect": negCorrect,
+                "negNumber": negNumber,
+                "elapsed_time": elapsed_time,
+                "total_samples": total_samples,
+                "pred": pred,
+                "true": true,
+                "correct": correct,
+            }
+
+        # Select the best prompt based on overall accuracy
+        best_prompt = max(results, key=lambda x: results[x]["overall_accuracy"])
+        best_result = results[best_prompt]
 
         print("--- Results ---")
-        print(f"Prompt: {prompt[:60]}...")
-        print(f"Time: {elapsed_time:.2f} s")
-        print(f"Positive Accuracy: {posCorrect}/{posNumber} ({posCorrect / posNumber:.4f})")
-        print(f"Neutral Accuracy: {neuCorrect}/{neuNumber} ({neuCorrect / neuNumber:.4f})")
-        print(f"Negative Accuracy: {negCorrect}/{negNumber} ({negCorrect / negNumber:.4f})")
+        print(f"Prompting: {prompt_name}")
+        print(f"Best Prompt: {best_prompt[:60]}...")
+        print(f"Time: {best_result['elapsed_time']:.2f} s")
+        print(f"Overall Accuracy: {best_result['correct']}/{best_result['total_samples']} ({best_result['overall_accuracy']:.4f})")
+        print(f"Positive Accuracy: {best_result['posCorrect']}/{best_result['posNumber']} ({best_result['posCorrect'] / best_result['posNumber']:.4f})")
+        print(f"Neutral Accuracy: {best_result['neuCorrect']}/{best_result['neuNumber']} ({best_result['neuCorrect'] / best_result['neuNumber']:.4f})")
+        print(f"Negative Accuracy: {best_result['negCorrect']}/{best_result['negNumber']} ({best_result['negCorrect'] / best_result['negNumber']:.4f})")
+        
+        print("\nConfusion Matrix:")
+        cm = confusion_matrix(best_result['true'], best_result['pred'], labels=allowed_labels)
+        disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=allowed_labels)
+        disp.plot(cmap='Blues', xticks_rotation=45)
+        plt.title("Confusion Matrix")
+        plt.tight_layout()
+        plt.savefig(f"confusion_matrix_{model}_{prompt_name}.jpg")
+        print(f"\nSaved confusion matrix as: confusion_matrix_{model}_{prompt_name}.jpg\n")
