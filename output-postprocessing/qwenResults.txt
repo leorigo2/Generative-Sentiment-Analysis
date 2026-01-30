@@ -1,24 +1,17 @@
-FEWSHOT
+--- Results ---
+Prompting: zeroshot
+Best Prompt: Text: {}...
+Time: 336.45 s
+Overall Accuracy: 537/1000 (0.5370)
+Positive Accuracy: 166/197 (0.8426)
+Neutral Accuracy: 216/499 (0.4329)
+Negative Accuracy: 155/304 (0.5099)
 
-=== RISULTATI ===
-Prompt: Text: {}...
-Tempo totale: 202.19 secondi
-Accuracy totale: 0.6112
-Positive Accuracy: 138/166 (0.8313)
-Neutral Accuracy: 83/199 (0.4171)
-Negative Accuracy: 84/134 (0.6269)
-
-ZEROSHOT
-
-=== RISULTATI ===
-Prompt: Text: {}...
-Tempo totale: 118.14 secondi
-Accuracy totale: 0.5731
-Positive Accuracy: 145/166 (0.8735)
-Neutral Accuracy: 65/199 (0.3266)
-Negative Accuracy: 76/134 (0.5672)
-
-
-
-
-
+--- Results ---
+Prompting: fewshot
+Best Prompt: Text: {}...
+Time: /// s
+Overall Accuracy: 570/1000 (0.5700)
+Positive Accuracy: 169/197 (0.8578)
+Neutral Accuracy: 174/499 (0.3486)
+Negative Accuracy: 227/304 (0.7467)

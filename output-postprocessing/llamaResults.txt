@@ -1,21 +1,17 @@
-ZEROSHOT
+--- Results ---
+Prompting: zeroshot
+Best Prompt: Is the following text expressing "Positive", "Negative" or "...
+Time: 280.01 s
+Overall Accuracy: 447/1000 (0.4470)
+Positive Accuracy: 83/197 (0.4213)
+Neutral Accuracy: 252/499 (0.5050)
+Negative Accuracy: 112/304 (0.3684)
 
 --- Results ---
-Prompt: Analyze the sentiment of the following text and complete the...
-Time: 134.28 s
-Positive Accuracy: 110/166 (0.6627)
-Neutral Accuracy: 27/199 (0.1357)
-Negative Accuracy: 106/134 (0.7910)
---- Results ---
-Prompt: Analyze the sentiment of the following text and complete the...
-Time: 137.01 s
-Positive Accuracy: 112/166 (0.6747)
-Neutral Accuracy: 32/199 (0.1608)
-Negative Accuracy: 86/134 (0.6418)
---- Results ---
-Prompt: Is the following text expressing "Positive", "Negative" or "...
-Time: 134.00 s
-Positive Accuracy: 84/166 (0.5060)
-Neutral Accuracy: 65/199 (0.3266)
-Negative Accuracy: 68/134 (0.5075)
-
+Prompting: fewshot
+Best Prompt: Analyze the sentiment of the following texts. Choose one of:...
+Time: 543.00 s
+Overall Accuracy: 545/1000 (0.5450)
+Positive Accuracy: 108/197 (0.5482)
+Neutral Accuracy: 187/499 (0.3747)
+Negative Accuracy: 250/304 (0.8224)

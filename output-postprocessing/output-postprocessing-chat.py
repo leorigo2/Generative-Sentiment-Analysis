@@ -7,7 +7,6 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, LogitsProcessorLis
 import numpy as np
 from transformers import GPT2Tokenizer, GPT2LMHeadModel
 import time
-import kagglehub
 from kagglehub import KaggleDatasetAdapter
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
@@ -18,16 +17,15 @@ models = {
 
 max_new_tokens = 20
 dataset  = "github" # "huggingface" or "github"
-model = "qwen"
-# prompting = 1 # 1 corresponds to few shot, 0 to zero shot
+model_name = "qwen"
 
 # Generation parameters
 temperature = 0.7 # To invalidate set to 1.0 
 top_k = 5 # To invalidate set to 0.0
 top_p = 0.9 # To invalidate set to 1.0
 
-tokenizer = AutoTokenizer.from_pretrained(models[model])
-model = AutoModelForCausalLM.from_pretrained(models[model])
+tokenizer = AutoTokenizer.from_pretrained(models[model_name])
+model = AutoModelForCausalLM.from_pretrained(models[model_name])
 
 
 # Seleziona il dispositivo
@@ -42,27 +40,17 @@ print("Working on:", device)
 device = torch.device(device)
 model.to(device)
 
-hf_dataset = kagglehub.load_dataset(
-    KaggleDatasetAdapter.HUGGING_FACE,
-    "mdismielhossenabir/sentiment-analysis",
-    path="sentiment_analysis.csv",
-)
-
-hf_test_data = hf_dataset
-hf_test_text = [item["text"] for item in hf_test_data]
-hf_test_labels = [item["sentiment"].strip().capitalize() for item in hf_test_data]
-
 mapping_link = f"https://raw.githubusercontent.com/cardiffnlp/tweeteval/main/datasets/sentiment/test_text.txt"
 with urllib.request.urlopen(mapping_link) as f:
     html = f.read().decode('utf-8').split("\n")
 html = html[:-1]
-gh_test_text = [row for row in html]
+gh_test_text = [row for row in html[:1000]]
 
 mapping_link = f"https://raw.githubusercontent.com/cardiffnlp/tweeteval/main/datasets/sentiment/test_labels.txt"
 with urllib.request.urlopen(mapping_link) as f:
     html = f.read().decode('utf-8').split("\n")
 html = html[:-1]
-gh_test_labels = ["Negative" if row == "0" else "Neutral" if row == "1" else "Positive" for row in html]
+gh_test_labels = ["Negative" if row == "0" else "Neutral" if row == "1" else "Positive" for row in html[:1000]]
 
 test_text = {
     "huggingface": hf_test_text,
@@ -135,9 +123,9 @@ def extract_label_from_output(output_text, allowed_labels):
             return label
     return "Unknown"
 
-def analyze_sentiment(text, prompt):
+def analyze_sentiment(text, prompt, prompting):
       
-    prompt = prompt.format(text)
+    prompt = prompt.replace("{}", text)
       
     messages = [
         {"role": "system", "content": (system_prompt_zeroshot if prompting == 0 else system_prompt_fewshot)},
@@ -177,7 +165,7 @@ if __name__ == "__main__":
         prompt_name = "fewshot" if prompting == 1 else "zeroshot"
         results = {}
         
-        for prompt in prompts[prompting]:
+        for prompt in prompts:
             start_time = time.time()
 
             correct = 0
@@ -189,11 +177,12 @@ if __name__ == "__main__":
             true = []
 
             for i, text in enumerate(test_text[dataset]):
-                result = analyze_sentiment(text, prompt)
+                result = analyze_sentiment(text, prompt, prompting)
                 true_label = test_labels[dataset][i]
                 
                 pred.append(result)
                 true.append(true_label)
+                print
 
                 if result == true_label:
                     correct += 1
@@ -251,5 +240,5 @@ if __name__ == "__main__":
         disp.plot(cmap='Blues', xticks_rotation=45)
         plt.title("Confusion Matrix")
         plt.tight_layout()
-        plt.savefig(f"confusion_matrix_{model}_{prompt_name}.jpg")
-        print(f"\nSaved confusion matrix as: confusion_matrix_{model}_{prompt_name}.jpg\n")
+        plt.savefig(f"confusion_matrix_{model_name}_{prompt_name}.jpg")
+        print(f"\nSaved confusion matrix as: confusion_matrix_{model_name}_{prompt_name}.jpg\n")

@@ -15,16 +15,15 @@ models = {
 
 max_new_tokens = 10 
 dataset  = "github" 
-model = "llama"
-prompting = 1 # 0 corresponds to few shot, 1 to zero shot
+model_name = "llama"
 
 # Generation parameters
 temperature = 0.7 # To invalidate set to 1.0 
 top_k = 5 # To invalidate set to 0.0
 top_p = 0.9 # To invalidate set to 1.0
 
-tokenizer = AutoTokenizer.from_pretrained(models[model])
-model = AutoModelForCausalLM.from_pretrained(models[model])
+tokenizer = AutoTokenizer.from_pretrained(models[model_name])
+model = AutoModelForCausalLM.from_pretrained(models[model_name])
 
 
 # Select device
@@ -43,13 +42,15 @@ mapping_link = f"https://raw.githubusercontent.com/cardiffnlp/tweeteval/main/dat
 with urllib.request.urlopen(mapping_link) as f:
     html = f.read().decode('utf-8').split("\n")
 html = html[:-1]
-gh_test_text = [row for row in html]
+gh_test_text = [row for row in html[:1000]]
+
+print(len(gh_test_text))
 
 mapping_link = f"https://raw.githubusercontent.com/cardiffnlp/tweeteval/main/datasets/sentiment/test_labels.txt"
 with urllib.request.urlopen(mapping_link) as f:
     html = f.read().decode('utf-8').split("\n")
 html = html[:-1]
-gh_test_labels = ["Negative" if row == "0" else "Neutral" if row == "1" else "Positive" for row in html]
+gh_test_labels = ["Negative" if row == "0" else "Neutral" if row == "1" else "Positive" for row in html[:1000]]
 
 test_text = {
     "github": gh_test_text 
@@ -136,8 +137,9 @@ def analyze_sentiment(text, prompt):
     if prompting == 0:
       prompt = prompt.format(sorted_pos[-1], sorted_pos[-2], sorted_pos[-3], sorted_neg[-1], sorted_neg[-2], sorted_neg[-3], sorted_neu[-1], sorted_neu[-2], sorted_neu[-3], text)
     else:
-      prompt = prompt.format(text)    
-      inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+      prompt = prompt.format(text) 
+         
+    inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
 
     with torch.no_grad():
         outputs = model.generate(
@@ -174,6 +176,7 @@ if __name__ == "__main__":
             true = []
 
             for i, text in enumerate(test_text[dataset]):
+                print(f"Processing {i}...")
                 result = analyze_sentiment(text, prompt)
                 true_label = test_labels[dataset][i]
                 
@@ -236,5 +239,5 @@ if __name__ == "__main__":
         disp.plot(cmap='Blues', xticks_rotation=45)
         plt.title("Confusion Matrix")
         plt.tight_layout()
-        plt.savefig(f"confusion_matrix_{model}_{prompt_name}.jpg")
-        print(f"\nSaved confusion matrix as: confusion_matrix_{model}_{prompt_name}.jpg\n")
+        plt.savefig(f"confusion_matrix_{model_name}_{prompt_name}.jpg")
+        print(f"\nSaved confusion matrix as: confusion_matrix_{model_name}_{prompt_name}.jpg\n")
