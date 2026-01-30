@@ -16,7 +16,7 @@ models = {
 }
 
 max_new_tokens = 20
-dataset  = "github" # "huggingface" or "github"
+dataset  = "github" 
 model_name = "qwen"
 
 # Generation parameters
@@ -53,12 +53,10 @@ html = html[:-1]
 gh_test_labels = ["Negative" if row == "0" else "Neutral" if row == "1" else "Positive" for row in html[:1000]]
 
 test_text = {
-    "huggingface": hf_test_text,
     "github": gh_test_text 
 }
 
 test_labels = {
-    "huggingface": hf_test_labels,
     "github": gh_test_labels
 }
 
