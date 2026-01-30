@@ -14,11 +14,10 @@ models = {
 }
 
 dataset  = "github" 
-model = "llama"
-# prompting = 1 # 0 corresponds to few shot, 1 to zero shot
+model_name = "llama"
 
-tokenizer = AutoTokenizer.from_pretrained(models[model])
-model = AutoModelForCausalLM.from_pretrained(models[model])
+tokenizer = AutoTokenizer.from_pretrained(models[model_name])
+model = AutoModelForCausalLM.from_pretrained(models[model_name])
 
 
 # Choose device 
@@ -37,13 +36,13 @@ mapping_link = f"https://raw.githubusercontent.com/cardiffnlp/tweeteval/main/dat
 with urllib.request.urlopen(mapping_link) as f:
     html = f.read().decode('utf-8').split("\n")
 html = html[:-1]
-gh_test_text = [row for row in html]
+gh_test_text = [row for row in html[:1000]]
 
 mapping_link = f"https://raw.githubusercontent.com/cardiffnlp/tweeteval/main/datasets/sentiment/test_labels.txt"
 with urllib.request.urlopen(mapping_link) as f:
     html = f.read().decode('utf-8').split("\n")
 html = html[:-1]
-gh_test_labels = ["Negative" if row == "0" else "Neutral" if row == "1" else "Positive" for row in html]
+gh_test_labels = ["Negative" if row == "0" else "Neutral" if row == "1" else "Positive" for row in html[:1000]]
 
 test_text = {
     "github": gh_test_text 
@@ -119,8 +118,6 @@ prompts = [
     ]
 ]
 
-allowed_labels = [" Positive", " Negative", " Neutral"] 
-
 allowed_token_ids = [tokenizer(label, add_special_tokens=False)["input_ids"][0] for label in allowed_labels]
 
 class RestrictFirstTokenProcessor(torch.nn.Module):
@@ -142,8 +139,9 @@ def analyze_sentiment(text, prompt):
     if prompting == 0:
       prompt = prompt.format(sorted_pos[-1], sorted_pos[-2], sorted_pos[-3], sorted_neg[-1], sorted_neg[-2], sorted_neg[-3], sorted_neu[-1], sorted_neu[-2], sorted_neu[-3], text)
     else:
-      prompt = prompt.format(text)    
-      inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+      prompt = prompt.format(text) 
+         
+    inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
 
     logits_processor = LogitsProcessorList()
     logits_processor.append(RestrictFirstTokenProcessor(allowed_token_ids))
@@ -239,5 +237,5 @@ if __name__ == "__main__":
         disp.plot(cmap='Blues', xticks_rotation=45)
         plt.title("Confusion Matrix")
         plt.tight_layout()
-        plt.savefig(f"confusion_matrix_{model}_{prompt_name}.jpg")
-        print(f"\nSaved confusion matrix as: confusion_matrix_{model}_{prompt_name}.jpg\n")
+        plt.savefig(f"confusion_matrix_{model_name}_{prompt_name}.jpg")
+        print(f"\nSaved confusion matrix as: confusion_matrix_{model_name}_{prompt_name}.jpg\n")

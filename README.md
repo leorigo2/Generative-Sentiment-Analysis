@@ -67,9 +67,7 @@ pip install -r requirements.txt
 
 Each script contains configurable parameters at the top:
 
-```python
-prompting = 0 or 1           # 0: few-shot, 1: zero-shot
-
+```bash
 # For output-postprocessing only:
 max_new_tokens = 10-20       # Number of tokens to generate
 temperature = 0.7            # Sampling temperature

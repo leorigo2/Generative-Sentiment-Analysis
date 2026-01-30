@@ -16,7 +16,6 @@ models = {
 
 dataset  = "github" 
 model = "qwen"
-# prompting = 1 # 1 corresponds to few shot, 0 to zero shot
 
 tokenizer = AutoTokenizer.from_pretrained(models[model])
 model = AutoModelForCausalLM.from_pretrained(models[model])
@@ -39,13 +38,13 @@ mapping_link = f"https://raw.githubusercontent.com/cardiffnlp/tweeteval/main/dat
 with urllib.request.urlopen(mapping_link) as f:
     html = f.read().decode('utf-8').split("\n")
 html = html[:-1]
-gh_test_text = [row for row in html]
+gh_test_text = [row for row in html[:1000]]
 
 mapping_link = f"https://raw.githubusercontent.com/cardiffnlp/tweeteval/main/datasets/sentiment/test_labels.txt"
 with urllib.request.urlopen(mapping_link) as f:
     html = f.read().decode('utf-8').split("\n")
 html = html[:-1]
-gh_test_labels = ["Negative" if row == "0" else "Neutral" if row == "1" else "Positive" for row in html]
+gh_test_labels = ["Negative" if row == "0" else "Neutral" if row == "1" else "Positive" for row in html[:1000]]
 
 test_text = {
     "github": gh_test_text 
@@ -109,7 +108,7 @@ prompts = [
     """Text: {}"""
 ]
 
-allowed_labels = [" Positive", " Negative", " Neutral"] 
+allowed_labels = ["Positive", "Negative", "Neutral"] 
 
 allowed_token_ids = [tokenizer(label, add_special_tokens=False)["input_ids"][0] for label in allowed_labels]
 
@@ -128,9 +127,9 @@ class RestrictFirstTokenProcessor(torch.nn.Module):
             self.called = True
         return scores
 
-def analyze_sentiment(text, prompt):
+def analyze_sentiment(text, prompt, prompting):
       
-    prompt = prompt.format(text)
+    prompt = prompt.replace("{}", text)
       
     messages = [
         {"role": "system", "content": (system_prompt_zeroshot if prompting == 0 else system_prompt_fewshot)},
@@ -171,7 +170,7 @@ if __name__ == "__main__":
         prompt_name = "fewshot" if prompting == 1 else "zeroshot"
         results = {}
         
-        for prompt in prompts[prompting]:
+        for prompt in prompts:
             start_time = time.time()
 
             correct = 0
@@ -183,7 +182,7 @@ if __name__ == "__main__":
             true = []
 
             for i, text in enumerate(test_text[dataset]):
-                result = analyze_sentiment(text, prompt)
+                result = analyze_sentiment(text, prompt, prompting)
                 true_label = test_labels[dataset][i]
                 
                 pred.append(result)
